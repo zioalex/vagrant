@@ -27,16 +27,16 @@ Vagrant.configure("2") do |config|
     test_host.vm.network :private_network, :auto_network => true
 
     test_host.vm.synced_folder "../", "/home/vagrant/service/"
-    #test_host.vm.provision "file", source: "../ansible_code", destination: "/home/vagrant/ansible_code"
     test_host.vm.provision :shell, inline: "apt-get update && apt-get -y install " + PKG_DEPS + " 1>/dev/null 2>&1"
     test_host.vm.provision :shell, inline: "usermod -aG docker vagrant"
-    test_host.vm.provision :shell, inline: "cd /home/vagrant/service/ansible_code/minikube; ansible-playbook setup.yml"
+    config.vm.network "forwarded_port", guest: 30000, host: 30000
+    config.vm.network "forwarded_port", guest: 30001, host: 30001
 
-#    test_host.trigger.after :up do |trigger|
-#      trigger.name = "Testing the code challenge"
-#      trigger.info = "I am running after vagrant up!!"
-#      trigger.run_remote = { inline: "su -c 'cd /home/vagrant/ansible/;
-#                                      ansible RUN'" }
-#    end
+    test_host.trigger.after :up do |trigger|
+      trigger.name = "Creating the full environment"
+      trigger.info = "I am running after vagrant up!!"
+      trigger.run_remote = { inline: "su - vagrant -c 'cd /home/vagrant/service/ansible_code/minikube;
+       ansible-playbook setup.yml'" }
+    end
   end
 end
